@@ -1,0 +1,67 @@
+name: 'Workspace Cleanup'
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '*/15 * * * *'
+
+jobs:
+  cleanup_check:
+    name: 'Cleanup'
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.cleanup_environments_check.outputs.environments }}
+    steps:
+      - name: Check if workspace last update was over 30 minutes ago.
+        id: cleanup_environments_check
+        run: |
+          sudo apt-get install -y jq moreutils
+
+          curl \
+          -H "Accept: application/vnd.github+json" \
+          https://api.github.com/repos/tomp736/pymp_infra/environments > environments.json
+
+          # pull out environments json array
+          jq '.environments' environments.json > envs.json
+
+          # loop through each env name
+          for git_env in $(jq -r '.[] | [.name] | @csv' envs.json)
+          do
+              ENVNAME=$(echo $git_env | cut -d ',' -f1 | tr -d '"')
+
+              curl \
+              -H "Accept: application/vnd.github+json" \
+              https://api.github.com/repos/tomp736/pymp_infra/deployments?environment=$ENVNAME > $ENVNAME.json
+
+              DATE_DEP=$(jq -r '.[] | [.updated_at] | @csv' $ENVNAME.json | sort -r | head -n 1 | tr -d '"')
+              DATE_EXP=$(date -d "$DATE_DEP + 30 minutes" +%s)
+              DATE_NOW=$(date -u +%s)
+
+              if [ "$DATE_EXP" -ge "$DATE_NOW" ]
+              then 
+                  echo $ENVNAME
+                  jq -r --arg ENVNAME "$ENVNAME" 'del(.[] | select (.name == $ENVNAME))' envs.json | sponge envs.json
+              fi
+          done
+
+          cat envs.json
+
+          TODELETE=$(jq -rc '[.[].name]' envs.json)
+
+          echo $TODELETE
+          echo "environments=$TODELETE" >> $GITHUB_OUTPUT
+      - id: debug
+        run: |
+          echo "Result: ${{ steps.cleanup_environments_check.outputs.environments }}"
+  cleanup:
+    needs: cleanup_check
+    if: ${{ needs.cleanup_check.outputs.environments != '[]' && needs.cleanup_check.outputs.environments != '' }}
+    uses: ./.github/workflows/workspace-destroy.yml
+    strategy:
+      fail-fast: false
+      matrix: 
+        ENVIRONMENT: ${{fromJson(needs.cleanup_check.outputs.environments)}}
+    with:
+      ENVIRONMENT: ${{ matrix.ENVIRONMENT }}
+      TF_MODULES_REF: 'dev'
+    secrets: inherit

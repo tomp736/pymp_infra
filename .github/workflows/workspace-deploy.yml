@@ -1,0 +1,236 @@
+name: 'Workspace Deploy'
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    name: 'terraform'
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/labrats-work/ops-images/omnibus:latest
+    environment: ${{ inputs.ENVIRONMENT }}
+    concurrency: 
+      group: ${{ inputs.ENVIRONMENT }}
+      cancel-in-progress: false
+    steps:
+    - 
+      name: Checkout
+      uses: actions/checkout@v3
+      with:
+        ref: 
+    - 
+      name: Create default.tfvars file
+      run: |
+        echo "hcloud_token = \"${{ secrets.HCLOUD_TOKEN }}\"" > terraform/default.tfvars
+        echo "public_key = \"${{ inputs.PUBLIC_KEY }}\"" >> terraform/default.tfvars
+    - 
+      name: Apply changes for remote backend
+      run: |
+        echo "Create default.tfrc file"
+        echo "# default.tfrc" > default.tfrc
+        echo "credentials \"app.terraform.io\" {" >> default.tfrc
+        echo "  token = \"${{ secrets.TFCLOUD_TOKEN }}\"" >> default.tfrc
+        echo "}" >> default.tfrc
+
+        echo "Create config.remote.tfbackend"
+        echo "# config.remote.tfbackend" > terraform/config.remote.tfbackend
+        echo "workspaces { name = \"pymp_${{ inputs.ENVIRONMENT }}\" }" >> terraform/config.remote.tfbackend
+        echo "hostname     = \"app.terraform.io\"" >> terraform/config.remote.tfbackend
+        echo "organization = \"labrats-work\"" >> terraform/config.remote.tfbackend 
+
+        echo "Create config.remote.tfbackend"
+        sed -i 's|local|remote|g' terraform/providers.tf
+    - 
+      name: Terraform Init
+      run: terraform -chdir=terraform init -backend-config=config.remote.tfbackend
+      env:
+        TF_CLI_CONFIG_FILE: default.tfrc
+    - 
+      name: Terraform Plan
+      run: terraform -chdir=terraform plan --var-file=default.tfvars -out=tfplan -input=false
+      env:
+        TF_CLI_CONFIG_FILE: default.tfrc
+    - 
+      name: Terraform Apply
+      run: |      
+        eval `ssh-agent`
+        echo "${KEYFILE}" | ssh-add -
+        terraform -chdir=terraform apply tfplan
+      env:
+        KEYFILE: ${{ secrets.SSH_KEY }}
+        TF_CLI_CONFIG_FILE: default.tfrc
+    - 
+      uses: actions/upload-artifact@v2
+      with:
+        name: terraform-output
+        path: |
+          terraform/ansible_hosts_site
+          terraform/ansible_hosts_cluster
+
+  ansible-init:
+    name: 'ansible-init'
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/labrats-work/ops-images/omnibus:latest
+    if: always()
+    steps:
+    - 
+      name: Checkout
+      uses: actions/checkout@v3
+    - 
+      name: Update Ansible Ref
+      run: |
+        cd ./ansible
+        yq -i '.collections[] |= select(.name == "https://github.com/labrats-work/modules-ansible.git").version="${{ inputs.ANSIBLE_MODULES_REF }}"' requirements.yml
+    - 
+      name: Cache Ansible
+      uses: actions/cache@v3
+      with:
+        key: ansible-${{ github.run_id }}
+        path: |
+          ~/.ansible
+    -     
+      name: Ansible Galaxy Install
+      run: |
+        cd ./ansible
+        ansible-galaxy install -r requirements.yml
+
+  ansible-site:
+    needs: 
+      - terraform
+      - ansible-init
+    name: 'ansible-site'
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/labrats-work/ops-images/omnibus:latest
+    environment: ${{ inputs.ENVIRONMENT }}
+    concurrency: 
+      group: ${{ inputs.ENVIRONMENT }}
+      cancel-in-progress: false
+    steps:
+    - 
+      name: Checkout
+      uses: actions/checkout@v3
+    - 
+      uses: actions/download-artifact@v2
+      with:
+        name: terraform-output
+    - 
+      name: Copy Ansible Hosts
+      run: |
+        cp ansible_hosts_site ansible/inventory/site
+    - 
+      name: Update Ansible Ref
+      run: |
+        cd ./ansible
+        yq -i '.collections[] |= select(.name == "https://github.com/labrats-work/modules-ansible.git").version="${{ inputs.ANSIBLE_MODULES_REF }}"' requirements.yml
+    - 
+      name: Cache Ansible
+      uses: actions/cache@v3
+      with:
+        key: ansible-${{ github.run_id }}
+        path: |
+          ~/.ansible
+    - 
+      name: Ansible Playbook
+      run: |
+        eval `ssh-agent`
+        echo "${KEYFILE}" | ssh-add -
+        cd ./ansible
+        ansible-playbook -i inventory/site site.yml
+      env:
+        KEYFILE: ${{ secrets.SSH_KEY }}
+        FLUX_INIT_OWNER: tomp736
+        FLUX_INIT_REPO: pymp_flux
+        FLUX_INIT_PATH: ./clusters/${{ inputs.FLUX_WORKSPACE }}
+        FLUX_INIT_TOKEN: ${{ secrets.FLUX_INIT_TOKEN }}  
+
+  ansible-cluster:
+    needs: 
+      - terraform
+      - ansible-init
+      - ansible-site
+    name: 'ansible-cluster'
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/labrats-work/ops-images/omnibus:latest
+    environment: ${{ inputs.ENVIRONMENT }}
+    concurrency: 
+      group: ${{ inputs.ENVIRONMENT }}
+      cancel-in-progress: false
+    steps:
+    - 
+      name: Checkout
+      uses: actions/checkout@v3
+    - 
+      uses: actions/download-artifact@v2
+      with:
+        name: terraform-output
+    - 
+      name: Copy Ansible Hosts
+      run: |
+        cp ansible_hosts_cluster ansible/inventory/cluster
+    - 
+      name: Update Ansible Ref
+      run: |
+        cd ./ansible
+        yq -i '.collections[] |= select(.name == "https://github.com/labrats-work/modules-ansible.git").version="${{ inputs.ANSIBLE_MODULES_REF }}"' requirements.yml
+    - 
+      name: Cache Ansible
+      uses: actions/cache@v3
+      with:
+        key: ansible-${{ github.run_id }}
+        path: |
+          ~/.ansible
+    -
+      name: Ansible Playbook
+      run: |
+        eval `ssh-agent`
+        echo "${KEYFILE}" | ssh-add -
+        cd ./ansible
+        ansible-playbook -i inventory/cluster cluster.yml
+      env:
+        KEYFILE: ${{ secrets.SSH_KEY }}
+        FLUX_INIT_OWNER: tomp736
+        FLUX_INIT_REPO: pymp_flux
+        FLUX_INIT_PATH: ./clusters/${{ inputs.FLUX_WORKSPACE }}
+        FLUX_INIT_TOKEN: ${{ secrets.FLUX_INIT_TOKEN }}  
+
+on:
+  workflow_call:
+    inputs:
+      ENVIRONMENT:
+        type: string
+        description: Terraform Remote Workspace
+        required: true
+      REPO_REF:
+        type: string
+        description: Repository Ref
+        required: true
+      TF_MODULES_REF:
+        type: string
+        description: Terraform Modules Ref
+        required: true
+      ANSIBLE_MODULES_REF:
+        type: string
+        description: Ansible Modules Ref
+        required: true
+      FLUX_WORKSPACE:
+        type: string
+        description: Flux Workspace
+        required: true
+      PUBLIC_KEY:
+        type: string
+        description: Public key to add to servers.
+        required: true
+      TERRAFORM_APPLY:
+        type: boolean
+        description: Apply Terraform
+        required: true
+        default: false
+      ANSIBLE_APPLY:
+        type: boolean
+        description: Apply Ansible
+        required: true
+        default: false
