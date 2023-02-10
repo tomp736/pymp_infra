@@ -23,7 +23,7 @@ jobs:
       name: Create default.tfvars file
       run: |
         echo "hcloud_token = \"${{ secrets.HCLOUD_TOKEN }}\"" > terraform/default.tfvars
-        echo "public_key = \"${{ inputs.PUBLIC_KEY }}\"" >> terraform/default.tfvars
+        echo "public_key = \"${{ secrets.DEPLOY_SSH_PUBLIC_KEY }}\"" >> terraform/default.tfvars
     - 
       name: Apply changes for remote backend
       run: |
@@ -58,7 +58,7 @@ jobs:
         echo "${KEYFILE}" | ssh-add -
         terraform -chdir=terraform apply tfplan
       env:
-        KEYFILE: ${{ secrets.SSH_KEY }}
+        KEYFILE: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         TF_CLI_CONFIG_FILE: default.tfrc
     - 
       uses: actions/upload-artifact@v2
@@ -140,7 +140,7 @@ jobs:
         cd ./ansible
         ansible-playbook -i inventory/site site.yml
       env:
-        KEYFILE: ${{ secrets.SSH_KEY }}
+        KEYFILE: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         FLUX_INIT_OWNER: tomp736
         FLUX_INIT_REPO: pymp_flux
         FLUX_INIT_PATH: ./clusters/${{ inputs.FLUX_WORKSPACE }}
@@ -191,7 +191,7 @@ jobs:
         cd ./ansible
         ansible-playbook -i inventory/cluster cluster.yml
       env:
-        KEYFILE: ${{ secrets.SSH_KEY }}
+        KEYFILE: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         FLUX_INIT_OWNER: tomp736
         FLUX_INIT_REPO: pymp_flux
         FLUX_INIT_PATH: ./clusters/${{ inputs.FLUX_WORKSPACE }}
