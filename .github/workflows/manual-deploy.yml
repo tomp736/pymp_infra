@@ -7,7 +7,7 @@ jobs:
   deploy:
     uses: ./.github/workflows/workspace-deploy.yml
     with:
-      ENVIRONMENT: pymp_${{ github.ref_name }}
+      ENVIRONMENT: ${{ github.actor }}-${{ github.ref_name }}
       REPO_REF: ${{ github.ref_name }}
       TF_MODULES_REF: ${{ github.ref_name }}
       ANSIBLE_MODULES_REF: ${{ github.ref_name }}
