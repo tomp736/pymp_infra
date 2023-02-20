@@ -142,7 +142,7 @@ jobs:
       env:
         KEYFILE: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         FLUX_INIT_OWNER: tomp736
-        FLUX_INIT_REPO: pymp_flux
+        FLUX_INIT_REPO: pymp_infra_flux
         FLUX_INIT_PATH: ./clusters/${{ inputs.FLUX_WORKSPACE }}
         FLUX_INIT_TOKEN: ${{ secrets.FLUX_INIT_TOKEN }}  
 
@@ -193,7 +193,7 @@ jobs:
       env:
         KEYFILE: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
         FLUX_INIT_OWNER: tomp736
-        FLUX_INIT_REPO: pymp_flux
+        FLUX_INIT_REPO: pymp_infra_flux
         FLUX_INIT_PATH: ./clusters/${{ inputs.FLUX_WORKSPACE }}
         FLUX_INIT_TOKEN: ${{ secrets.FLUX_INIT_TOKEN }}  
 
