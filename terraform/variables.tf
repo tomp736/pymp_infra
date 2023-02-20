@@ -6,8 +6,8 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
-variable "public_key" {
+variable "public_keys" {
   description = "(Required) - Public key for testing."
-  type        = string
+  type        = list
   sensitive   = true
 }

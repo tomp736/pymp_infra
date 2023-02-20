@@ -11,11 +11,9 @@ module "networks" {
 }
 
 module "bastion_node_group" {
-  source = "git::https://github.com/labrats-work/modules-terraform.git//modules/hetzner/node_group?ref=1.0.4"
-  nodes      = local.config_nodes_bastion
-  public_keys = [
-    var.public_key
-  ]
+  source      = "git::https://github.com/labrats-work/modules-terraform.git//modules/hetzner/node_group?ref=1.0.4"
+  nodes       = local.config_nodes_bastion
+  public_keys = var.public_keys
   sshd_config = {
     ssh_user = "sysadmin"
     ssh_port = "2222"
@@ -35,9 +33,7 @@ module "master_node_group" {
   ]
   nodes        = local.config_nodes_master
   bastion_host = values(module.bastion_node_group.nodes)[0].ipv4_address
-  public_keys = [
-    var.public_key
-  ]
+  public_keys  = var.public_keys
   sshd_config = {
     ssh_user = "sysadmin"
     ssh_port = "2222"
@@ -57,9 +53,7 @@ module "worker_node_group" {
   ]
   nodes        = local.config_nodes_worker
   bastion_host = values(module.bastion_node_group.nodes)[0].ipv4_address
-  public_keys = [
-    var.public_key
-  ]
+  public_keys  = var.public_keys
   sshd_config = {
     ssh_user = "sysadmin"
     ssh_port = "2222"
@@ -79,9 +73,7 @@ module "metrics_node_group" {
   ]
   nodes        = local.config_nodes_metrics
   bastion_host = values(module.bastion_node_group.nodes)[0].ipv4_address
-  public_keys = [
-    var.public_key
-  ]
+  public_keys  = var.public_keys
   sshd_config = {
     ssh_user = "sysadmin"
     ssh_port = "2222"
@@ -101,9 +93,7 @@ module "haproxy_node_group" {
   ]
   nodes        = local.config_nodes_haproxy
   bastion_host = values(module.bastion_node_group.nodes)[0].ipv4_address
-  public_keys = [
-    var.public_key
-  ]
+  public_keys  = var.public_keys
   sshd_config = {
     ssh_user = "sysadmin"
     ssh_port = "2222"
