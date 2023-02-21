@@ -6,6 +6,12 @@ variable "hcloud_token" {
   sensitive   = true
 }
 
+variable "hcloud_token_dns" {
+  description = "(Required) - The Hetzner DNS API Token."
+  type        = string
+  sensitive   = true
+}
+
 variable "public_keys" {
   description = "(Required) - Public key for testing."
   type        = list
