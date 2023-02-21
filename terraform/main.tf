@@ -110,7 +110,7 @@ data "hetznerdns_zone" "dns_zone" {
   name = "labrats.work"
 }
 
-resource "hetznerdns_record" "dns_record" {
+resource "hetznerdns_record_bastion" "dns_record" {
   for_each = module.bastion_node_group.nodes
 
   zone_id = data.hetznerdns_zone.dns_zone.id
@@ -120,7 +120,7 @@ resource "hetznerdns_record" "dns_record" {
   ttl     = 60
 }
 
-resource "hetznerdns_record" "dns_record" {
+resource "hetznerdns_record_haproxy" "dns_record" {
   for_each = module.haproxy_node_group.nodes
 
   zone_id = data.hetznerdns_zone.dns_zone.id
