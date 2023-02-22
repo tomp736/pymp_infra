@@ -130,7 +130,7 @@ resource "hetznerdns_record" "dns_record_haproxy" {
   ttl     = 60
 }
 
-resource "hetznerdns_record" "dns_record_haproxy" {
+resource "hetznerdns_record" "dns_record_haproxy_wild" {
   for_each = module.haproxy_node_group.nodes
 
   zone_id = data.hetznerdns_zone.dns_zone.id
