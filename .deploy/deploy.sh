@@ -26,10 +26,8 @@ terraform apply tfplan
 cp -f $TERRAFORM_PATH/ansible_hosts_cluster $ANSIBLE_PATH/ansible_hosts_cluster
 cp -f $TERRAFORM_PATH/ansible_hosts_site $ANSIBLE_PATH/ansible_hosts_site
 
-cd $SCRIPTPATH/ansible
+cd $ANSIBLE_PATH
 
 ansible-galaxy install -f -r requirements.yml
-
 ansible-playbook -i inventory/ansible_hosts_site site.yml
-
 ansible-playbook -i inventory/ansible_hosts_cluster cluster.yml
