@@ -39,3 +39,4 @@
     ansible.builtin.service:
       name: haproxy
       state: restarted
+      
