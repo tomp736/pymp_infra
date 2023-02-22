@@ -27,19 +27,33 @@
         http: "{{ groups.worker | list }}"
         https: "{{ groups.worker | list }}"
 
-  - name: Move haproxy.cfg to haproxy.cfg.old
-    file:
-      src: /etc/haproxy/haproxy.cfg
-      dest: /etc/haproxy/haproxy.cfg.old
-      force: yes
+  - block:
+      - name: Backup haproxy.cfg
+        ansible.builtin.copy:
+          remote_src: true
+          src: /etc/haproxy/haproxy.cfg
+          dest: /etc/haproxy/haproxy.cfg.old
+          force: true
 
-  - name: Update haproxy config
-    ansible.builtin.template:
-      src: "files/haproxy/haproxy.cfg.j2"
-      dest: /etc/haproxy/haproxy.cfg
-      owner: haproxy
-      group: haproxy
-      mode: '0770'
+      - name: Delete haproxy.cfg
+        ansible.builtin.file:
+          path: /etc/haproxy/haproxy.cfg
+          state: absent
+
+      - name: Create haproxy config
+        ansible.builtin.template:
+          src: "files/haproxy/haproxy.cfg.j2"
+          dest: /etc/haproxy/haproxy.cfg
+          owner: haproxy
+          group: haproxy
+          mode: '0770'
+
+    rescue:
+      - name: Restore haproxy.cfg
+        ansible.builtin.copy:
+          remote_src: true
+          src: /etc/haproxy/haproxy.cfg.old
+          dest: /etc/haproxy/haproxy.cfg
 
   - name: Service Restart
     ansible.builtin.service:
