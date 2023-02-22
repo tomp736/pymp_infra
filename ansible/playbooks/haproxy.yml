@@ -28,7 +28,15 @@
         https: "{{ groups.worker | list }}"
 
   - block:
+
+      - name: Check if haproxy.cfg exists
+        become: true
+        ansible.builtin.stat:
+          path: /etc/haproxy/haproxy.cfg
+        register: haproxy_cfg_stat
+
       - name: Backup haproxy.cfg
+        when: haproxy_cfg_stat.stat.exists
         ansible.builtin.copy:
           remote_src: true
           src: /etc/haproxy/haproxy.cfg
@@ -36,6 +44,7 @@
           force: true
 
       - name: Delete haproxy.cfg
+        when: haproxy_cfg_stat.stat.exists
         ansible.builtin.file:
           path: /etc/haproxy/haproxy.cfg
           state: absent
