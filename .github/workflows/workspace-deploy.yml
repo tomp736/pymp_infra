@@ -21,6 +21,7 @@ jobs:
       name: Create default.tfvars file
       run: |
         echo "hcloud_token = \"${{ secrets.HCLOUD_TOKEN }}\"" > terraform/default.tfvars
+        echo "hcloud_token_dns = \"${{ secrets.HCLOUD_TOKEN_DNS }}\"" >> terraform/default.tfvars
         public_keys=$(wget -qO- https://github.com/tomp736.keys | jq -R . | jq -s .)
         echo ${public_keys}
         echo "public_keys = ${public_keys}" >> terraform/default.tfvars
