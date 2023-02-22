@@ -27,6 +27,12 @@
         http: "{{ groups.worker | list }}"
         https: "{{ groups.worker | list }}"
 
+  - name: Move haproxy.cfg to haproxy.cfg.old
+    file:
+      src: /etc/haproxy/haproxy.cfg
+      dest: /etc/haproxy/haproxy.cfg.old
+      force: yes
+
   - name: Update haproxy config
     ansible.builtin.template:
       src: "files/haproxy/haproxy.cfg.j2"
@@ -39,4 +45,3 @@
     ansible.builtin.service:
       name: haproxy
       state: restarted
-      
