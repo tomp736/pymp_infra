@@ -130,6 +130,16 @@ resource "hetznerdns_record" "dns_record_haproxy" {
   ttl     = 60
 }
 
+resource "hetznerdns_record" "dns_record_haproxy" {
+  for_each = module.haproxy_node_group.nodes
+
+  zone_id = data.hetznerdns_zone.dns_zone.id
+  name    = "*.pymp"
+  value   = each.value.ipv4_address
+  type    = "A"
+  ttl     = 60
+}
+
 resource "local_file" "ansible_inventory_site" {
   content = templatefile("files/templates/site.tftpl", {
     bastion_nodes = [for node in module.bastion_node_group.nodes : {

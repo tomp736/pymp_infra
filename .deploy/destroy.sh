@@ -13,8 +13,8 @@ echo Ansible Path: $ANSIBLE_PATH
 yes | cp ../terraform -r .
 yes | cp ../ansible -r .
 
-sed -i 's|?ref=main|?ref=dev|g' terraform/main.tf
-sed -i 's|version: main|version: dev|g' ansible/requirements.yml
+# sed -i 's|?ref=main|?ref=dev|g' terraform/main.tf
+# sed -i 's|version: main|version: dev|g' ansible/requirements.yml
 
 cd $TERRAFORM_PATH
 
