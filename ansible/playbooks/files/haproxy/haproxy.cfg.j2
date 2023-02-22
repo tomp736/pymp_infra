@@ -49,6 +49,7 @@ backend kubernetes-api
     {% endfor %}
 
 frontend kubernetes-http
+    bind *:80
     mode http
     option httplog
     default_backend kubernetes-http
