@@ -72,7 +72,6 @@
             kind: KubeletConfiguration
             eventRecordQPS: 0
             protectKernelDefaults: true
-            serverTLSBootstrap: true
             tlsCipherSuites:
               - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
               - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
@@ -153,7 +152,6 @@
           kind: KubeletConfiguration
           eventRecordQPS: 0
           protectKernelDefaults: true
-          serverTLSBootstrap: true
           tlsCipherSuites:
             - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
             - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
