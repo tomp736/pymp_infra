@@ -3,16 +3,38 @@ name: 'Github Cleanup'
 on:
   workflow_dispatch:
   schedule:
-    - cron:  '0 0 * * *'
+    - cron:  '*/10 * * * *'
 
 jobs:
-  workflow:
+  delete-all:
     runs-on: ubuntu-latest
     steps:
       - name: Delete workflow runs
         uses: MajorScruffy/delete-old-workflow-runs@v0.3.0
         with:
           repository: tomp736/pymp_infra
-          older-than-seconds: 21600
+          older-than-seconds: 3600
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_WF_RW }}
+  delete-workspace-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete workflow runs
+        uses: MajorScruffy/delete-old-workflow-runs@v0.3.0
+        with:
+          repository: tomp736/pymp_infra
+          older-than-seconds: 60
+          workflow: .github/workflows/workspace-cleanup.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_WF_RW }}
+  delete-github-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete workflow runs
+        uses: MajorScruffy/delete-old-workflow-runs@v0.3.0
+        with:
+          repository: tomp736/pymp_infra
+          older-than-seconds: 60
+          workflow: .github/workflows/github-cleanup.yml
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_WF_RW }}
