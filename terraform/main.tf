@@ -130,6 +130,26 @@ resource "hetznerdns_record" "dns_record_haproxy" {
   ttl     = 60
 }
 
+resource "hetznerdns_record" "dns_record_workers" {
+  for_each = module.worker_node_group.nodes
+
+  zone_id = data.hetznerdns_zone.dns_zone.id
+  name    = "${each.value.name}.pymp_infra"
+  value   = each.value.ipv4_address
+  type    = "A"
+  ttl     = 60
+}
+
+resource "hetznerdns_record" "dns_record_masters" {
+  for_each = module.master_node_group.nodes
+
+  zone_id = data.hetznerdns_zone.dns_zone.id
+  name    = "${each.value.name}.pymp_infra"
+  value   = each.value.ipv4_address
+  type    = "A"
+  ttl     = 60
+}
+
 resource "hetznerdns_record" "dns_record_haproxy_wild" {
   for_each = module.haproxy_node_group.nodes
 
