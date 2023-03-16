@@ -121,43 +121,58 @@ resource "hetznerdns_record" "dns_record_bastion" {
 }
 
 resource "hetznerdns_record" "dns_record_haproxy" {
-  for_each = module.haproxy_node_group.nodes
+  for_each = { for node in module.haproxy_node_group.nodes : node.name =>
+  {
+    hostname = "${node.name}.pymp_infra",
+    address = node.ipv4_address
+  }}
 
   zone_id = data.hetznerdns_zone.dns_zone.id
-  name    = "${each.value.name}.pymp_infra"
+  name    = each.value.hostname
   value   = each.value.ipv4_address
   type    = "A"
   ttl     = 60
 }
 
 resource "hetznerdns_record" "dns_record_workers" {
-  for_each = module.worker_node_group.nodes
+  for_each = { for node in module.worker_node_group.nodes : node.name =>
+  {
+    hostname = "${node.name}.pymp_infra",
+    address = node.ipv4_address
+  }}
 
   zone_id = data.hetznerdns_zone.dns_zone.id
-  name    = "${each.value.name}.pymp_infra"
+  name    = each.value.hostname
   value   = each.value.ipv4_address
   type    = "A"
   ttl     = 60
 }
 
 resource "hetznerdns_record" "dns_record_masters" {
-  for_each = module.master_node_group.nodes
+  for_each = { for node in module.master_node_group.nodes : node.name =>
+  {
+    hostname = "${node.name}.pymp_infra",
+    address = node.ipv4_address
+  }}
 
   zone_id = data.hetznerdns_zone.dns_zone.id
-  name    = "${each.value.name}.pymp_infra"
+  name    = each.value.hostname
   value   = each.value.ipv4_address
   type    = "A"
   ttl     = 60
 }
 
 resource "hetznerdns_record" "dns_record_haproxy_wild" {
-  for_each = module.haproxy_node_group.nodes
+  for_each = { for node in module.haproxy_node_group.nodes : node.name =>
+  {
+    hostname = "*.pymp",
+    address = node.ipv4_address
+  }}
 
   zone_id = data.hetznerdns_zone.dns_zone.id
-  name    = "*.pymp"
+  name    = each.value.hostname
   value   = each.value.ipv4_address
   type    = "A"
-  ttl     = 60
 }
 
 resource "local_file" "ansible_inventory_site" {
