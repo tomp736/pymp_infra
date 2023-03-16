@@ -67,7 +67,7 @@ jobs:
           TF_CLI_CONFIG_FILE: default.tfrc
       - 
         name: Terraform Plan
-        if: ${{ inputs.tfapply }}
+        if: ${{ inputs.terraform_apply }}
         run: |
           terraform -chdir=terraform plan --var-file=deploy.tfvars -out=tfplan -input=false
         env:
