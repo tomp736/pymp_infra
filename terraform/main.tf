@@ -111,7 +111,7 @@ data "hetznerdns_zone" "dns_zone" {
 }
 
 resource "hetznerdns_record" "dns_record_bastion" {
-  for_each = module.bastion_node_group.nodes
+  for_each = nonsensitive(module.bastion_node_group.nodes)
 
   zone_id = data.hetznerdns_zone.dns_zone.id
   name    = "${each.value.name}.pymp_infra"
