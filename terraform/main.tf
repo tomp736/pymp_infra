@@ -111,51 +111,51 @@ data "hetznerdns_zone" "dns_zone" {
 }
 
 resource "hetznerdns_record" "dns_record_bastion" {
-  for_each = nonsensitive(module.bastion_node_group.nodes)
+  for_each = local.config_nodes_bastion
 
   zone_id = data.hetznerdns_zone.dns_zone.id
   name    = "${each.value.name}.pymp_infra"
-  value   = each.value.ipv4_address
+  value   = module.bastion_node_group.nodes[each.key].ipv4_address
   type    = "A"
   ttl     = 60
 }
 
 resource "hetznerdns_record" "dns_record_haproxy" {
-  for_each = nonsensitive(module.haproxy_node_group.nodes)
+  for_each = local.config_nodes_haproxy
 
   zone_id = data.hetznerdns_zone.dns_zone.id
   name    = "${each.value.name}.pymp_infra"
-  value   = each.value.ipv4_address
+  value   = module.haproxy_node_group.nodes[each.key].ipv4_address
   type    = "A"
   ttl     = 60
 }
 
 resource "hetznerdns_record" "dns_record_workers" {
-  for_each = nonsensitive(module.worker_node_group.nodes)
+  for_each = local.config_nodes_worker
 
   zone_id = data.hetznerdns_zone.dns_zone.id
   name    = "${each.value.name}.pymp_infra"
-  value   = each.value.ipv4_address
+  value   = module.worker_node_group.nodes[each.key].ipv4_address
   type    = "A"
   ttl     = 60
 }
 
 resource "hetznerdns_record" "dns_record_masters" {
-  for_each = nonsensitive(module.master_node_group.nodes)
+  for_each = local.config_nodes_master
 
   zone_id = data.hetznerdns_zone.dns_zone.id
   name    = "${each.value.name}.pymp_infra"
-  value   = each.value.ipv4_address
+  value   = module.master_node_group.nodes[each.key].ipv4_address
   type    = "A"
   ttl     = 60
 }
 
 resource "hetznerdns_record" "dns_record_haproxy_wild" {
-  for_each = nonsensitive(module.haproxy_node_group.nodes)
+  for_each = local.config_nodes_haproxy
 
   zone_id = data.hetznerdns_zone.dns_zone.id
   name    = "*.pymp"
-  value   = each.value.ipv4_address
+  value   = module.haproxy_node_group.nodes[each.key].ipv4_address
   type    = "A"
   ttl     = 60
 }
