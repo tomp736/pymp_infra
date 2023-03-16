@@ -1,0 +1,86 @@
+name: 'on wfc ansible'
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        description: environment
+        required: true
+      ansible_apply:
+        type: boolean
+        description: 'ansible apply'
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  always:
+    name: 'always'
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: run
+        run: |
+          echo something
+  ansible:
+    if: ${{ inputs.ansible_apply }}
+    name: 'ansible'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency: 
+      group: ${{ inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - 
+        name: Checkout
+        uses: actions/checkout@v3
+      - 
+        name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - 
+        name: Install dependencies Including Ansible
+        working-directory: ansible
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - 
+        name: Download ansible_hosts_site
+        uses: actions/download-artifact@v3
+        continue-on-error: true
+        with:
+          name: ansible_hosts
+          path: ansible/inventory
+      -       
+        name: ansible requirements
+        working-directory: ansible
+        run: |
+          ansible-galaxy install -r requirements.yml
+        env:
+          KEYFILE: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      -       
+        name: site playbook
+        working-directory: ansible
+        run: |
+          eval `ssh-agent`
+          echo "${KEYFILE}" | ssh-add -
+          ansible-playbook -i inventory/ansible_hosts_site site.yml
+        env:
+          KEYFILE: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      - 
+        name: cluster playbook
+        working-directory: ansible
+        run: |
+          eval `ssh-agent`
+          echo "${KEYFILE}" | ssh-add -
+          ansible-playbook -i inventory/ansible_hosts_cluster cluster.yml
+        env:
+          KEYFILE: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          FLUX_INIT_OWNER: tomp736
+          FLUX_INIT_REPO: pymp_infra_flux
+          FLUX_INIT_PATH: ./clusters/${{ inputs.FLUX_WORKSPACE }}
+          FLUX_INIT_TOKEN: ${{ secrets.FLUX_INIT_TOKEN }}  

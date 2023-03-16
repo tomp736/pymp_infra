@@ -1,0 +1,17 @@
+name: 'cron deploy nightly'
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 0 * * *'
+      
+jobs:
+  terraform-apply:
+    uses: ./.github/workflows/on_wfc_deploy.yml
+    with:
+      resource_prefix: pymp-nightly
+      environment: pymp_nightly
+      terraform_apply: true
+      ansible_apply: true
+      terraform_destroy: true
+    secrets: inherit

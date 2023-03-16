@@ -1,0 +1,24 @@
+name: on pr open
+
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+on:
+  pull_request:
+    types: 
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - dev
+      - main
+
+jobs:
+
+  # run ansible-lint
+  ansible-lint:      
+    uses: ./.github/workflows/on_wfc_ansible_lint.yml
+    secrets: inherit
+
+  # run tffmt
+  tffmt:      
+    uses: ./.github/workflows/on_wfc_terraform_fmt.yml
+    secrets: inherit

@@ -1,0 +1,51 @@
+name: 'on wfc deploy'
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        description: 'environment'
+        required: false
+        default: true
+      terraform_apply:
+        type: boolean
+        description: 'if true will apply terraform'
+        required: false
+        default: true
+      ansible_apply:
+        type: boolean
+        description: 'if true will run ansible playbooks'
+        required: false
+        default: true
+      terraform_destroy:
+        type: boolean
+        description: 'if true will destroy terraform'
+        required: false
+        default: false
+
+jobs:
+  terraform-apply:
+    uses: ./.github/workflows/on_wfc_terraform.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_apply: ${{ inputs.terraform_apply }}
+    secrets: inherit
+
+  ansible:
+    needs:
+    - terraform-apply
+    uses: ./.github/workflows/on_wfc_ansible.yml
+    with:
+      environment: ${{ inputs.environment }}
+      ansible_apply: ${{ inputs.ansible_apply }}
+    secrets: inherit
+
+  terraform-destroy:
+    needs:
+    - ansible
+    uses: ./.github/workflows/on_wfc_terraform.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_destroy: ${{ inputs.terraform_destroy }}
+    secrets: inherit

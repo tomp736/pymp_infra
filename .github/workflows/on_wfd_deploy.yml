@@ -1,0 +1,41 @@
+name: 'Dispatch Deploy'
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: 'environment'
+        required: false
+        default: main
+        options:
+        - main
+        - main-promotion
+        - dev
+        - dev-promotion
+        - nightly
+      terraform_apply:
+        type: boolean
+        description: 'terraform apply'
+        required: false
+        default: true
+      ansible_apply:
+        type: boolean
+        description: 'run ansible playbooks'
+        required: false
+        default: true
+      terraform_destroy:
+        type: boolean
+        description: 'terraform destroy'
+        required: false
+        default: false
+      
+jobs:
+  deploy:
+    uses: ./.github/workflows/on_wfc_deploy.yml
+    with:
+      environment: ${{ inputs.environment }}
+      terraform_apply: ${{ inputs.terraform_apply }}
+      ansible_apply: ${{ inputs.ansible_apply }}
+      terraform_destroy: ${{ inputs.terraform_destroy }}
+    secrets: inherit

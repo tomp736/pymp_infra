@@ -1,0 +1,54 @@
+name: 'on wfc ansible lint'
+
+on: 
+  workflow_call:
+    # inputs:
+    #   autofix_pr_branch:
+    #     type: string
+    #     description: 'autofix pr branch'
+    #     required: false
+    #     default: ''
+    #   autofix_pr_create:
+    #     type: boolean
+    #     description: 'create autofix pr'
+    #     required: false
+    #     default: false
+    #   autofix_tag:
+    #     type: string
+    #     description: 'create autofix pr'
+    #     required: false
+    #     default: 'ansible-autofix'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - 
+        uses: actions/checkout@v3
+      - 
+        name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - 
+        name: Install dependencies Including Ansible
+        working-directory: ansible
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - 
+        name: Run ansible-lint
+        working-directory: ansible
+        run: |
+          ansible-lint --profile=basic
+
+        # TODO
+        # name: create autofix pr
+        # if: ${{ steps.tf_fmt.outputs.changes != '0' && inputs.autofix_pr }}
+        # id: create_pull_request
+        # uses: peter-evans/create-pull-request@v4
+        # with:
+        #   token: ${{ secrets.WORKFLOW_TOKEN }}
+        #   title: ${{ inputs.autofix_pr_branch }} terraform format autofix
+        #   branch: ${{ inputs.autofix_pr_branch }}-${{ inputs.autofix_tag }}

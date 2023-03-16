@@ -1,0 +1,17 @@
+name: 'on repo dispatch deploy'
+on:
+  repository_dispatch:
+    types: [deploy_pymp]
+
+permissions:
+  contents: write
+
+jobs:
+  terraform-apply:
+    uses: ./.github/workflows/on_wfc_deploy.yml
+    with:
+      environment: "${{ github.event.client_payload.environment }}"
+      terraform_apply: true
+      ansible_apply: true
+      terraform_destroy: false
+    secrets: inherit
