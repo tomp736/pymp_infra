@@ -9,7 +9,6 @@ jobs:
   terraform-apply:
     uses: ./.github/workflows/on_wfc_deploy.yml
     with:
-      resource_prefix: pymp-nightly
       environment: pymp_nightly
       terraform_apply: true
       ansible_apply: true
